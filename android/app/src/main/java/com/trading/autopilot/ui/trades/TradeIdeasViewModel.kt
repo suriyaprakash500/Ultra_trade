@@ -15,6 +15,7 @@ data class TradeIdeasUiState(
     val isLoading: Boolean = false,
     val isGenerating: Boolean = false,
     val error: String? = null,
+    val successMessage: String? = null,
     val ideas: List<TradeIdea> = emptyList()
 )
 
@@ -28,7 +29,7 @@ class TradeIdeasViewModel @Inject constructor(
 
     fun generateIdeas() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isGenerating = true, error = null)
+            _uiState.value = _uiState.value.copy(isGenerating = true, error = null, successMessage = null)
 
             repository.getTradeIdeas().onSuccess { ideas ->
                 _uiState.value = _uiState.value.copy(
@@ -46,6 +47,8 @@ class TradeIdeasViewModel @Inject constructor(
 
     fun executeIdea(idea: TradeIdea) {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(error = null, successMessage = null)
+
             val order = OrderRequest(
                 symbol = idea.symbol,
                 side = idea.side,
@@ -55,13 +58,18 @@ class TradeIdeasViewModel @Inject constructor(
                 take_profit = if (idea.take_profit > 0) idea.take_profit else null
             )
             repository.placeOrder(order).onSuccess {
-                // Remove executed idea from list
+                // Remove executed idea from list and show success
                 _uiState.value = _uiState.value.copy(
-                    ideas = _uiState.value.ideas.filter { it != idea }
+                    ideas = _uiState.value.ideas.filter { it != idea },
+                    successMessage = "✅ ${idea.side} ${idea.symbol} executed! Check Dashboard."
                 )
             }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(error = e.message)
+                _uiState.value = _uiState.value.copy(error = "❌ ${e.message}")
             }
         }
+    }
+
+    fun clearMessages() {
+        _uiState.value = _uiState.value.copy(error = null, successMessage = null)
     }
 }

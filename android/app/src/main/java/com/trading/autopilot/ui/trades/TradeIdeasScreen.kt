@@ -75,6 +75,14 @@ fun TradeIdeasScreen(
                 }
             }
 
+            state.successMessage?.let { message ->
+                item {
+                    GlassCard {
+                        Text(message, color = BullishGreen, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+
             if (state.ideas.isEmpty() && !state.isGenerating) {
                 item {
                     GlassCard {
