@@ -419,6 +419,29 @@ def create_tool_registry() -> ToolRegistry:
         handler=_kill_switch,
     )
 
+    # ═══ Technical Analysis Tool ═════════════════════════════════
+
+    async def _get_technical(symbol: str) -> dict:
+        from backend.mcp_server.tools.market_tools import fetch_technical_indicators
+        return await fetch_technical_indicators(symbol)
+
+    registry.register(
+        name="get_technical_indicators",
+        description=(
+            "Get technical analysis for a stock: RSI, MACD, Bollinger Bands, "
+            "moving averages (SMA 20/50/200, EMA 12/26), volume analysis, "
+            "support/resistance levels, and overall signal."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "symbol": {"type": "string", "description": "NSE stock symbol (e.g. RELIANCE)"},
+            },
+            "required": ["symbol"],
+        },
+        handler=_get_technical,
+    )
+
     logger.info(f"Tool registry created with {len(registry.get_tool_names())} tools")
     return registry
 

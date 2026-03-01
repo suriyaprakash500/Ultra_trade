@@ -12,6 +12,8 @@ services:
         sync: false
       - key: APP_ENV
         value: production
+      - key: RENDER_EXTERNAL_URL
+        value: https://ultra-trade-9d8r.onrender.com
       - key: TRADING_MODE
         value: paper
       - key: APP_SECRET_KEY

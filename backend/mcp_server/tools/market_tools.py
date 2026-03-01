@@ -164,3 +164,13 @@ async def fetch_multiple_prices(symbols: list[str]) -> dict[str, float]:
             logger.warning(f"Price fetch failed for {symbol}: {exc}")
 
     return prices
+
+
+async def fetch_technical_indicators(symbol: str) -> dict:
+    """
+    Get RSI, MACD, Bollinger Bands, MAs, and support/resistance for a stock.
+
+    Used by the AI agent to make better trade decisions.
+    """
+    from backend.ai.technical_analysis import get_technical_analysis
+    return await get_technical_analysis(symbol.upper())

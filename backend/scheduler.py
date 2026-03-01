@@ -139,6 +139,22 @@ async def _save_daily_metrics() -> None:
         logger.error(f"Daily metrics save failed: {exc}")
 
 
+async def _keep_alive_ping() -> None:
+    """Ping the Render health endpoint to prevent free tier from sleeping."""
+    import os
+    render_url = os.environ.get("RENDER_EXTERNAL_URL", "")
+    if not render_url:
+        return  # Not on Render, skip
+
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(f"{render_url}/health")
+            logger.debug(f"Keep-alive ping: {response.status_code}")
+    except Exception as exc:
+        logger.warning(f"Keep-alive ping failed: {exc}")
+
+
 def create_scheduler() -> AsyncIOScheduler:
     """Create and configure the scheduler with all jobs."""
     global _scheduler
@@ -182,6 +198,15 @@ def create_scheduler() -> AsyncIOScheduler:
         CronTrigger(hour=15, minute=45, day_of_week="mon-fri", timezone=IST),
         id="daily_metrics",
         name="Daily Metrics Snapshot",
+        replace_existing=True,
+    )
+
+    # Keep-alive: ping Render every 13 min to prevent sleeping
+    scheduler.add_job(
+        _keep_alive_ping,
+        IntervalTrigger(minutes=13),
+        id="keep_alive",
+        name="Keep-Alive Ping",
         replace_existing=True,
     )
 

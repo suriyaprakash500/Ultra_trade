@@ -198,7 +198,7 @@ async def run_morning_routine(_: str = Depends(require_api_key)) -> dict:
 
 @router.get("/ai/trade-ideas")
 async def get_trade_ideas(_: str = Depends(require_api_key)) -> list:
-    """Generate AI-powered trade ideas."""
+    """Generate AI-powered trade ideas with technical analysis."""
     from backend.ai.news_analyzer import get_news_analyzer
     from backend.ai.decision_engine import get_decision_engine
 
@@ -207,7 +207,30 @@ async def get_trade_ideas(_: str = Depends(require_api_key)) -> list:
     analyses = await analyzer.analyze_batch(raw, max_items=10)
 
     engine = get_decision_engine()
-    return await engine.generate_trade_ideas(news_analyses=analyses)
+    ideas = await engine.generate_trade_ideas(news_analyses=analyses)
+
+    # Enrich each idea with technical analysis
+    from backend.ai.technical_analysis import get_technical_analysis
+    for idea in ideas:
+        if isinstance(idea, dict) and "symbol" in idea:
+            try:
+                ta = await get_technical_analysis(idea["symbol"])
+                idea["technical_analysis"] = ta
+            except Exception:
+                idea["technical_analysis"] = None
+
+    return ideas
+
+
+@router.get("/market/technical/{symbol}")
+async def get_technical(
+    symbol: str,
+    period: str = "6mo",
+    _: str = Depends(require_api_key),
+) -> dict:
+    """Get full technical analysis for a stock (RSI, MACD, Bollinger, MAs)."""
+    from backend.ai.technical_analysis import get_technical_analysis
+    return await get_technical_analysis(symbol.upper(), period)
 
 
 @router.get("/ai/morning-briefing")
