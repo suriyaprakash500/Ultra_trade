@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     grok_base_url: str = "https://api.x.ai/v1"
 
     # ── App Settings ───────────────────────────────────────────────
-    app_secret_key: str = "change-me-in-production"
+    app_secret_key: str = "trading_autopilot_dev_key_2026"
     app_env: str = "development"
     app_port: int = 8000
     app_host: str = "0.0.0.0"

@@ -19,8 +19,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Backend URL — public tunnel via Serveo
-        buildConfigField("String", "BASE_URL", "\"https://657d7b861fb5a0df-157-51-132-155.serveousercontent.com\"")
+        // Backend URL — deployed on Render
+        buildConfigField("String", "BASE_URL", "\"https://ultra-trade-9d8r.onrender.com\"")
         buildConfigField("String", "API_KEY", "\"trading_autopilot_dev_key_2026\"")
     }
 
