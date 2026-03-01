@@ -184,8 +184,8 @@ async def get_news(_: str = Depends(require_api_key)) -> list:
     from backend.ai.news_analyzer import get_news_analyzer
 
     analyzer = get_news_analyzer()
-    raw = await analyzer.fetch_all_news(max_per_source=5)
-    return await analyzer.analyze_batch(raw, max_items=5)
+    raw = await analyzer.fetch_all_news(max_per_source=10)
+    return await analyzer.analyze_batch(raw, max_items=20)
 
 
 @router.post("/ai/morning-routine")
@@ -203,8 +203,8 @@ async def get_trade_ideas(_: str = Depends(require_api_key)) -> list:
     from backend.ai.decision_engine import get_decision_engine
 
     analyzer = get_news_analyzer()
-    raw = await analyzer.fetch_all_news(max_per_source=5)
-    analyses = await analyzer.analyze_batch(raw, max_items=5)
+    raw = await analyzer.fetch_all_news(max_per_source=10)
+    analyses = await analyzer.analyze_batch(raw, max_items=10)
 
     engine = get_decision_engine()
     return await engine.generate_trade_ideas(news_analyses=analyses)
@@ -254,6 +254,44 @@ async def kill_switch_status(_: str = Depends(require_api_key)) -> dict:
     return {
         "active": ks.is_active,
         "history": ks.history,
+    }
+
+
+@router.get("/scheduler/status")
+async def scheduler_status(_: str = Depends(require_api_key)) -> dict:
+    """Get scheduler status and upcoming jobs."""
+    from backend.scheduler import get_scheduler, is_market_hours
+
+    scheduler = get_scheduler()
+    if not scheduler:
+        return {"running": False, "jobs": []}
+
+    jobs = []
+    for job in scheduler.get_jobs():
+        jobs.append({
+            "id": job.id,
+            "name": job.name,
+            "next_run": str(job.next_run_time) if job.next_run_time else None,
+        })
+
+    return {
+        "running": scheduler.running,
+        "market_hours": is_market_hours(),
+        "jobs": jobs,
+    }
+
+
+@router.post("/market/refresh-prices")
+async def refresh_prices(_: str = Depends(require_api_key)) -> dict:
+    """Manually refresh prices for all open positions."""
+    from backend.scheduler import _refresh_prices
+    await _refresh_prices()
+
+    from backend.trading.paper_trader import get_paper_trader
+    trader = get_paper_trader()
+    return {
+        "positions_updated": trader.positions_count,
+        "portfolio_value": round(trader.portfolio_value, 2),
     }
 
 

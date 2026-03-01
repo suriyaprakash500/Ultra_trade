@@ -162,9 +162,67 @@ class PaperTrader:
         self.trade_history: list[dict] = []
         self._peak_value = self.starting_capital
 
+        self._restored = False
         logger.info(
             f"Paper trader initialized with ₹{self.starting_capital:,.2f} capital"
         )
+
+    async def restore_from_db(self) -> None:
+        """Restore state from database after server restart."""
+        if self._restored:
+            return
+
+        from backend.data.persistence import load_positions, load_trades, load_orders
+
+        try:
+            # Restore positions
+            saved_positions = await load_positions()
+            for p in saved_positions:
+                self.positions[p["symbol"]] = PaperPosition(
+                    symbol=p["symbol"],
+                    exchange=p.get("exchange", "NSE"),
+                    quantity=p["quantity"],
+                    average_price=p["average_price"],
+                    sector=p.get("sector"),
+                )
+                pos = self.positions[p["symbol"]]
+                pos.current_price = p.get("current_price", p["average_price"])
+                pos.stop_loss = p.get("stop_loss")
+                pos.take_profit = p.get("take_profit")
+
+            # Restore trade history
+            self.trade_history = await load_trades()
+
+            # Restore orders
+            saved_orders = await load_orders()
+            for o in saved_orders:
+                order = PaperOrder(
+                    symbol=o["symbol"],
+                    exchange=o.get("exchange", "NSE"),
+                    side=o["side"],
+                    quantity=o["quantity"],
+                    order_type=o.get("order_type", "MARKET"),
+                    price=o.get("price", 0.0),
+                    reason=o.get("reason", ""),
+                    ai_confidence=o.get("ai_confidence", 0.0),
+                )
+                order.id = o["id"]
+                order.status = o.get("status", "COMPLETED")
+                self.orders.append(order)
+
+            # Recalculate cash based on executed trades
+            total_invested = sum(p.invested_value for p in self.positions.values())
+            realized_pnl = sum(t.get("pnl", 0) for t in self.trade_history)
+            self.cash_balance = self.starting_capital - total_invested + realized_pnl
+
+            self._restored = True
+            logger.info(
+                f"Restored from DB: {len(self.positions)} positions, "
+                f"{len(self.trade_history)} trades, cash=₹{self.cash_balance:,.2f}"
+            )
+        except Exception as exc:
+            logger.error(f"Failed to restore from DB: {exc}")
+            self._restored = True
 
     # ── Portfolio Properties ───────────────────────────────────────
 
@@ -288,6 +346,8 @@ class PaperTrader:
         self, order: PaperOrder, execution_price: float
     ) -> None:
         """Process an order fill at the given price."""
+        from backend.data.persistence import save_order, save_position, save_trade, delete_position
+
         order.executed_price = execution_price
         order.executed_at = datetime.utcnow()
         order.status = OrderStatus.COMPLETED.value
@@ -309,6 +369,13 @@ class PaperTrader:
                 f"@ ₹{execution_price:.2f} (total: ₹{cost:,.2f})"
             )
 
+            # Persist to DB
+            try:
+                await save_order(order.to_dict())
+                await save_position(order.symbol, self.positions[order.symbol].to_dict())
+            except Exception as e:
+                logger.error(f"DB save failed: {e}")
+
         elif order.side == "SELL":
             pnl = self._remove_from_position(order, execution_price)
             if pnl is not None:
@@ -318,6 +385,18 @@ class PaperTrader:
                     f"[PAPER] SELL executed: {order.quantity}x {order.symbol} "
                     f"@ ₹{execution_price:.2f} (P&L: ₹{pnl:,.2f})"
                 )
+
+                # Persist to DB
+                try:
+                    await save_order(order.to_dict())
+                    if order.symbol in self.positions:
+                        await save_position(order.symbol, self.positions[order.symbol].to_dict())
+                    else:
+                        await delete_position(order.symbol)
+                    if self.trade_history:
+                        await save_trade(self.trade_history[-1])
+                except Exception as e:
+                    logger.error(f"DB save failed: {e}")
             else:
                 order.status = OrderStatus.REJECTED.value
                 logger.warning(

@@ -55,13 +55,21 @@ async def lifespan(app: FastAPI):
     # Initialize database
     await init_database()
 
-    # Initialize paper trader
+    # Initialize paper trader + restore from DB
     if settings.is_paper_trading:
         from backend.trading.paper_trader import get_paper_trader
         trader = get_paper_trader()
+        await trader.restore_from_db()
         logger.info(
-            f"Paper trader ready: ₹{trader.starting_capital:,.2f} capital"
+            f"Paper trader ready: ₹{trader.cash_balance:,.2f} cash, "
+            f"{trader.positions_count} positions"
         )
+
+    # Start scheduler
+    from backend.scheduler import create_scheduler
+    scheduler = create_scheduler()
+    scheduler.start()
+    logger.info("Scheduler started with 4 automated jobs ✓")
 
     logger.info("Application startup complete ✓")
 
@@ -69,6 +77,8 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     logger.info("Shutting down...")
+    if scheduler.running:
+        scheduler.shutdown(wait=False)
     await close_database()
     logger.info("Shutdown complete")
 
