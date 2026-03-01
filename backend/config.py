@@ -31,8 +31,8 @@ class Settings(BaseSettings):
 
     # ── Grok AI (xAI) ──────────────────────────────────────────────
     grok_api_key: str = ""
-    grok_model: str = "grok-3-mini-fast"
-    grok_base_url: str = "https://api.x.ai/v1"
+    grok_model: str = "llama-3.3-70b-versatile"
+    grok_base_url: str = "https://api.groq.com/openai/v1"
 
     # ── App Settings ───────────────────────────────────────────────
     app_secret_key: str = "trading_autopilot_dev_key_2026"
