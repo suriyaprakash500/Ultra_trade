@@ -382,7 +382,7 @@ def create_tool_registry() -> ToolRegistry:
         )
         safety = get_safety_layers()
         result = safety.check_all(proposal)
-        return result.dict()
+        return result.model_dump()
 
     registry.register(
         name="check_trade_risk",

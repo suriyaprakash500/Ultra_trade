@@ -7,7 +7,7 @@ Can be triggered manually (from Android app) or automatically by safety layers.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 
 from loguru import logger
 
@@ -59,7 +59,7 @@ class KillSwitch:
             )
 
         record = {
-            "activated_at": datetime.utcnow().isoformat(),
+            "activated_at": datetime.now(UTC).isoformat(),
             "reason": reason,
             "positions_closed": len(closed_orders),
             "orders": closed_orders,
@@ -81,7 +81,7 @@ class KillSwitch:
         safety.deactivate_kill_switch()
 
         return {
-            "deactivated_at": datetime.utcnow().isoformat(),
+            "deactivated_at": datetime.now(UTC).isoformat(),
             "status": "trading_resumed",
         }
 

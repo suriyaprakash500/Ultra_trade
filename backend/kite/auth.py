@@ -13,7 +13,7 @@ Uses httpx for direct API calls instead of the kiteconnect SDK.
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from typing import Optional
 
 import httpx
@@ -50,7 +50,7 @@ class KiteAuth:
         """True if we have a valid, non-expired access token."""
         if not self._access_token or not self._token_expiry:
             return False
-        return datetime.utcnow() < self._token_expiry
+        return datetime.now(UTC) < self._token_expiry
 
     @property
     def access_token(self) -> Optional[str]:
@@ -111,7 +111,7 @@ class KiteAuth:
             if data.get("status") == "success":
                 self._access_token = data["data"]["access_token"]
                 # Kite tokens expire at ~6 AM IST next day
-                self._token_expiry = datetime.utcnow() + timedelta(hours=20)
+                self._token_expiry = datetime.now(UTC) + timedelta(hours=20)
 
                 logger.info(
                     "Kite authentication successful, "
@@ -135,7 +135,7 @@ class KiteAuth:
         Useful for resuming a session without re-authenticating.
         """
         self._access_token = token
-        self._token_expiry = datetime.utcnow() + timedelta(hours=20)
+        self._token_expiry = datetime.now(UTC) + timedelta(hours=20)
         logger.info("Access token set manually")
 
     def invalidate(self) -> None:

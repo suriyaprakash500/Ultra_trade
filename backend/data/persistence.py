@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from loguru import logger
@@ -45,7 +45,7 @@ async def save_order(order_dict: dict) -> None:
             stop_loss=order_dict.get("stop_loss"),
             take_profit=order_dict.get("take_profit"),
             created_at=datetime.fromisoformat(order_dict["created_at"])
-            if "created_at" in order_dict else datetime.utcnow(),
+            if "created_at" in order_dict else datetime.now(UTC),
         )
         session.add(record)
     logger.debug(f"Saved order {record.id} to DB")
@@ -68,7 +68,7 @@ async def save_position(symbol: str, pos_dict: dict) -> None:
             existing.pnl_pct = pos_dict["pnl_pct"]
             existing.stop_loss = pos_dict.get("stop_loss")
             existing.take_profit = pos_dict.get("take_profit")
-            existing.updated_at = datetime.utcnow()
+            existing.updated_at = datetime.now(UTC)
         else:
             record = PositionRecord(
                 id=str(uuid.uuid4()),
@@ -111,9 +111,9 @@ async def save_trade(trade_dict: dict) -> None:
             reason=trade_dict.get("reason", ""),
             ai_confidence=trade_dict.get("ai_confidence", 0.0),
             entered_at=datetime.fromisoformat(trade_dict["entered_at"])
-            if "entered_at" in trade_dict else datetime.utcnow(),
+            if "entered_at" in trade_dict else datetime.now(UTC),
             exited_at=datetime.fromisoformat(trade_dict["exited_at"])
-            if "exited_at" in trade_dict else datetime.utcnow(),
+            if "exited_at" in trade_dict else datetime.now(UTC),
         )
         session.add(record)
     logger.debug(f"Saved trade {record.symbol} to DB")
@@ -196,7 +196,7 @@ async def load_orders() -> list[dict]:
 
 async def save_daily_metrics(metrics: dict, portfolio_value: float, cash: float) -> None:
     """Save daily performance snapshot."""
-    today = datetime.utcnow().strftime("%Y-%m-%d")
+    today = datetime.now(UTC).strftime("%Y-%m-%d")
 
     async with get_session() as session:
         result = await session.execute(

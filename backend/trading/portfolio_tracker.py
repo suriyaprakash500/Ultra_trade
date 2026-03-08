@@ -7,7 +7,7 @@ metrics, and provides daily snapshots for the performance dashboard.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from loguru import logger
@@ -71,7 +71,7 @@ class PortfolioTracker:
         metrics = self.get_performance_metrics()
 
         snapshot = {
-            "date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "date": datetime.now(UTC).strftime("%Y-%m-%d"),
             "portfolio_value": portfolio.get("total_value", 0),
             "cash_balance": portfolio.get("cash_balance", 0),
             "total_pnl": portfolio.get("total_pnl", 0),

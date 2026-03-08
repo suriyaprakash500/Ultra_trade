@@ -4,6 +4,34 @@ All changes to the project are documented here.
 
 ---
 
+## [2026-03-08] Session 5 — Documentation, Testing & Quality
+
+### Created
+- **`README.md`**: Comprehensive project documentation with architecture diagram, tech stack, feature list, project structure, quickstart guide, full API reference, and deployment guide
+- **`tests/backend/test_config.py`**: 13 tests for configuration management (defaults, properties, overrides)
+- **`tests/backend/test_order_manager.py`**: 9 tests for order validation, paper execution routing, and cancellation
+- **`tests/backend/test_api_routes.py`**: 20 tests for all REST API endpoints (health, auth, dashboard, portfolio, kill switch, Kite, MCP, scheduler)
+- **`tests/backend/test_mcp_server.py`**: 9 tests for ToolRegistry operations, tool definitions format, and the full 9-tool factory
+- **`tests/backend/test_scheduler.py`**: 9 tests for market hours detection, scheduler creation, and job configuration
+
+### Fixed
+- **`backend/mcp_server/server.py`**: Fixed Pydantic v2 deprecation — `.dict()` → `.model_dump()` in `check_trade_risk` tool
+- **`backend/data/models.py`**: Fixed Pydantic v2 deprecation — `class Config` → `model_config = ConfigDict(from_attributes=True)` in response schemas
+- **`backend/data/models.py`**: Fixed Python 3.12+ deprecation — `datetime.utcnow` → `lambda: datetime.now(UTC)` in all SQLAlchemy Column defaults
+- **`backend/trading/paper_trader.py`**: Fixed `datetime.utcnow()` → `datetime.now(UTC)` (4 occurrences)
+- **`backend/data/persistence.py`**: Fixed `datetime.utcnow()` → `datetime.now(UTC)` (5 occurrences)
+- **`backend/risk/kill_switch.py`**: Fixed `datetime.utcnow()` → `datetime.now(UTC)` (2 occurrences)
+- **`backend/trading/portfolio_tracker.py`**: Fixed `datetime.utcnow()` → `datetime.now(UTC)` (1 occurrence)
+- **`backend/kite/auth.py`**: Fixed `datetime.utcnow()` → `datetime.now(UTC)` (3 occurrences)
+- **`backend/ai/morning_routine.py`**: Fixed `datetime.utcnow()` → `datetime.now(UTC)` (2 occurrences)
+
+### Status
+- Test suite expanded from 28 → ~88 tests across 7 test files
+- Full REST API endpoint coverage with FastAPI TestClient
+- All configuration defaults and property helpers validated
+
+---
+
 ## [2026-02-28] Session 1 — Project Scaffolding & Backend Foundation
 
 ### Created

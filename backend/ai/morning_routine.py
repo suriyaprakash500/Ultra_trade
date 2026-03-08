@@ -12,7 +12,7 @@ Automates the pre-market analysis pipeline:
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from loguru import logger
@@ -102,7 +102,7 @@ class MorningRoutine:
         # ── Compile results ────────────────────────────────────────
         result = {
             "date": today,
-            "run_at": datetime.utcnow().isoformat(),
+            "run_at": datetime.now(UTC).isoformat(),
             "news_collected": len(raw_news),
             "news_analyzed": len(news_analyses),
             "news_analyses": news_analyses,
@@ -113,7 +113,7 @@ class MorningRoutine:
             "status": "complete",
         }
 
-        self._last_run = datetime.utcnow()
+        self._last_run = datetime.now(UTC)
         self._last_briefing = result
 
         logger.info(f"═══ Morning Routine Complete for {today} ═══")

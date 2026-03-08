@@ -8,11 +8,11 @@ Defines both SQLAlchemy ORM models (for persistence) and Pydantic schemas
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import (
     Column,
     DateTime,
@@ -116,8 +116,8 @@ class OrderRecord(Base):
     ai_confidence = Column(Float, default=0.0)
     stop_loss = Column(Float, nullable=True)
     take_profit = Column(Float, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class PositionRecord(Base):
@@ -137,8 +137,8 @@ class PositionRecord(Base):
     stop_loss = Column(Float, nullable=True)
     take_profit = Column(Float, nullable=True)
     trading_mode = Column(SAEnum(TradingMode), default=TradingMode.PAPER)
-    opened_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    opened_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
 
 class TradeRecord(Base):
@@ -160,7 +160,7 @@ class TradeRecord(Base):
     ai_confidence = Column(Float, default=0.0)
     duration_minutes = Column(Integer, default=0)
     trading_mode = Column(SAEnum(TradingMode), default=TradingMode.PAPER)
-    entered_at = Column(DateTime, default=datetime.utcnow)
+    entered_at = Column(DateTime, default=lambda: datetime.now(UTC))
     exited_at = Column(DateTime, nullable=True)
 
 
@@ -180,7 +180,7 @@ class NewsRecord(Base):
     affected_symbols = Column(Text, nullable=True)  # JSON list of symbols
     ai_confidence = Column(Float, default=0.0)
     processed = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class DailyMetrics(Base):
@@ -205,7 +205,7 @@ class DailyMetrics(Base):
     sharpe_ratio = Column(Float, default=0.0)
     trades_executed = Column(Integer, default=0)
     safety_triggers = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -245,8 +245,7 @@ class OrderResponse(BaseModel):
     take_profit: Optional[float] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PositionResponse(BaseModel):
@@ -265,8 +264,7 @@ class PositionResponse(BaseModel):
     trading_mode: TradingMode
     opened_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PortfolioSummary(BaseModel):

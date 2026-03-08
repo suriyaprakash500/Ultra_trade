@@ -9,7 +9,7 @@ and full order execution simulation using real market prices.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 from loguru import logger
@@ -42,7 +42,7 @@ class PaperPosition:
         self.sector = sector
         self.stop_loss: Optional[float] = None
         self.take_profit: Optional[float] = None
-        self.opened_at = datetime.utcnow()
+        self.opened_at = datetime.now(UTC)
 
     @property
     def market_value(self) -> float:
@@ -116,7 +116,7 @@ class PaperOrder:
         self.take_profit = take_profit
         self.ai_confidence = ai_confidence
         self.executed_price: float = 0.0
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(UTC)
         self.executed_at: Optional[datetime] = None
 
     def to_dict(self) -> dict:
@@ -349,7 +349,7 @@ class PaperTrader:
         from backend.data.persistence import save_order, save_position, save_trade, delete_position
 
         order.executed_price = execution_price
-        order.executed_at = datetime.utcnow()
+        order.executed_at = datetime.now(UTC)
         order.status = OrderStatus.COMPLETED.value
 
         if order.side == "BUY":
@@ -458,7 +458,7 @@ class PaperTrader:
             "reason": order.reason,
             "ai_confidence": order.ai_confidence,
             "entered_at": pos.opened_at.isoformat(),
-            "exited_at": datetime.utcnow().isoformat(),
+            "exited_at": datetime.now(UTC).isoformat(),
         })
 
         pos.quantity -= order.quantity
